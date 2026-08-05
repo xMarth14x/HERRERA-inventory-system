@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { BarChart3, Download, FileSearch, PackageSearch, Printer, Search, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 
@@ -61,12 +61,12 @@ export function ReportWorkspace() {
     });
   }, [location, result.locationKey, result.rows, search]);
 
-  useEffect(() => {
-    setPage(0);
-  }, [definition.id, location, search]);
-
   const pageCount = Math.max(1, Math.ceil(filteredRows.length / pageSize));
-  const pagedRows = filteredRows.slice(page * pageSize, page * pageSize + pageSize);
+  const currentPage = Math.min(page, pageCount - 1);
+  const pagedRows = filteredRows.slice(
+    currentPage * pageSize,
+    currentPage * pageSize + pageSize,
+  );
 
   function selectCategory(nextCategory: ReportCategory) {
     const firstReport = REPORT_DEFINITIONS.find((report) => report.category === nextCategory);
@@ -262,7 +262,7 @@ export function ReportWorkspace() {
 
               <div className="print:hidden">
                 <DataTablePagination
-                  page={page}
+                  page={currentPage}
                   pageCount={pageCount}
                   pageSize={pageSize}
                   totalRows={filteredRows.length}

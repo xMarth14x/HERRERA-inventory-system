@@ -16,6 +16,26 @@ type ScanResult =
   | { status: "not-found" }
   | { status: "found"; productName: string; variantName: string; sku: string; barcode: string };
 
+function findScanResult(catalog: ReturnType<typeof getProducts>, scanValue: string): ScanResult {
+  const term = scanValue.trim();
+  if (!term) return { status: "empty" };
+
+  for (const product of catalog) {
+    const variant = product.variants.find((item) => item.barcode === term);
+    if (variant) {
+      return {
+        status: "found",
+        productName: product.name,
+        variantName: variant.variantName,
+        sku: variant.sku,
+        barcode: variant.barcode,
+      };
+    }
+  }
+
+  return { status: "not-found" };
+}
+
 /**
  * Turns the Barcode Support spec into a working feature: every product gets
  * a real, auto-generated, unique Code128 barcode (no manual entry), and any
@@ -32,23 +52,7 @@ export function BarcodeWorkbench() {
 
   const [scanValue, setScanValue] = useState("");
 
-  const scanResult = useMemo<ScanResult>(() => {
-    const term = scanValue.trim();
-    if (!term) return { status: "empty" };
-    for (const product of catalog) {
-      const variant = product.variants.find((v) => v.barcode === term);
-      if (variant) {
-        return {
-          status: "found",
-          productName: product.name,
-          variantName: variant.variantName,
-          sku: variant.sku,
-          barcode: variant.barcode,
-        };
-      }
-    }
-    return { status: "not-found" };
-  }, [scanValue, catalog]);
+  const scanResult = findScanResult(catalog, scanValue);
 
   function handleGenerate() {
     // Every call checks against the catalog *and* every barcode generated

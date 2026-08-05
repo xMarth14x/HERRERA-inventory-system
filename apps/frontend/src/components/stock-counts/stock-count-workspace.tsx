@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { CheckCircle2, ClipboardList, Clock3, Plus, Search, ShieldCheck, Users } from "lucide-react";
 import { toast } from "sonner";
 
@@ -68,12 +68,12 @@ export function StockCountWorkspace() {
     });
   }, [counts, search, statusFilter, typeFilter]);
 
-  useEffect(() => {
-    setPage(0);
-  }, [search, statusFilter, typeFilter]);
-
   const pageCount = Math.max(1, Math.ceil(filteredCounts.length / pageSize));
-  const pagedCounts = filteredCounts.slice(page * pageSize, page * pageSize + pageSize);
+  const currentPage = Math.min(page, pageCount - 1);
+  const pagedCounts = filteredCounts.slice(
+    currentPage * pageSize,
+    currentPage * pageSize + pageSize,
+  );
 
   const activeCount = counts.filter((count) => ["DRAFT", "IN_PROGRESS", "SECOND_COUNT"].includes(count.status)).length;
   const awaitingApproval = counts.filter((count) => count.status === "FOR_APPROVAL").length;
@@ -253,7 +253,7 @@ export function StockCountWorkspace() {
           </div>
 
           <DataTablePagination
-            page={page}
+            page={currentPage}
             pageCount={pageCount}
             pageSize={pageSize}
             totalRows={filteredCounts.length}
