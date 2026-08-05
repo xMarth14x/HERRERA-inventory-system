@@ -34,7 +34,7 @@ const newUnitSchema = z.object({
     .min(1, "Code is required")
     .max(10, "Keep the code short, e.g. \"box\" or \"kg\""),
   dimension: z.enum(["Count", "Weight", "Volume"]),
-  conversionToBase: z.coerce.number().positive("Must be greater than 0"),
+  conversionToBase: z.number().positive("Must be greater than 0"),
   definition: z.string().min(1, "Definition is required"),
   description: z.string().min(1, "Description is required"),
   exampleUse: z.string().min(1, "Example use is required"),
@@ -144,7 +144,12 @@ export function NewUnitDialog({
               label={`Equals how many ${BASE_UNIT_LABEL[dimension]}s?`}
               error={errors.conversionToBase?.message}
             >
-              <Input type="number" min="0" step="any" {...register("conversionToBase")} />
+              <Input
+                type="number"
+                min="0"
+                step="any"
+                {...register("conversionToBase", { valueAsNumber: true })}
+              />
             </Field>
 
             <Field label="Definition" error={errors.definition?.message} className="col-span-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { BellRing, CheckCircle2, CircleAlert, Eye, Search, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 
@@ -54,12 +54,12 @@ export function InventoryAlertWorkspace() {
     });
   }, [alerts, search, severityFilter, statusFilter, typeFilter]);
 
-  useEffect(() => {
-    setPage(0);
-  }, [search, severityFilter, statusFilter, typeFilter]);
-
   const pageCount = Math.max(1, Math.ceil(filteredAlerts.length / pageSize));
-  const pagedAlerts = filteredAlerts.slice(page * pageSize, page * pageSize + pageSize);
+  const currentPage = Math.min(page, pageCount - 1);
+  const pagedAlerts = filteredAlerts.slice(
+    currentPage * pageSize,
+    currentPage * pageSize + pageSize,
+  );
 
   const openCount = alerts.filter((alert) => alert.status === "OPEN").length;
   const criticalCount = alerts.filter(
@@ -222,7 +222,7 @@ export function InventoryAlertWorkspace() {
           </div>
 
           <DataTablePagination
-            page={page}
+            page={currentPage}
             pageCount={pageCount}
             pageSize={pageSize}
             totalRows={filteredAlerts.length}

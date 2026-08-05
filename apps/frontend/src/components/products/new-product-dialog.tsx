@@ -32,12 +32,12 @@ const newProductSchema = z.object({
   expiryTracking: z.boolean(),
   variantName: z.string().min(1, "Variant name is required"),
   sku: z.string().min(1, "SKU is required"),
-  cost: z.coerce.number().min(0, "Must be 0 or more"),
-  sellingPrice: z.coerce.number().min(0, "Must be 0 or more"),
-  minimum: z.coerce.number().min(0, "Must be 0 or more"),
-  maximum: z.coerce.number().min(0, "Must be 0 or more"),
-  reorderPoint: z.coerce.number().min(0, "Must be 0 or more"),
-  reorderQuantity: z.coerce.number().min(0, "Must be 0 or more"),
+  cost: z.number().min(0, "Must be 0 or more"),
+  sellingPrice: z.number().min(0, "Must be 0 or more"),
+  minimum: z.number().min(0, "Must be 0 or more"),
+  maximum: z.number().min(0, "Must be 0 or more"),
+  reorderPoint: z.number().min(0, "Must be 0 or more"),
+  reorderQuantity: z.number().min(0, "Must be 0 or more"),
 });
 
 type NewProductValues = z.infer<typeof newProductSchema>;
@@ -177,22 +177,40 @@ export function NewProductDialog({
                 <Input value="Auto-generated on save" disabled className="text-muted-foreground" />
               </Field>
               <Field label="Cost" error={errors.cost?.message}>
-                <Input type="number" step="0.01" min="0" {...register("cost")} />
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...register("cost", { valueAsNumber: true })}
+                />
               </Field>
               <Field label="Selling price" error={errors.sellingPrice?.message}>
-                <Input type="number" step="0.01" min="0" {...register("sellingPrice")} />
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...register("sellingPrice", { valueAsNumber: true })}
+                />
               </Field>
               <Field label="Minimum" error={errors.minimum?.message}>
-                <Input type="number" min="0" {...register("minimum")} />
+                <Input type="number" min="0" {...register("minimum", { valueAsNumber: true })} />
               </Field>
               <Field label="Maximum" error={errors.maximum?.message}>
-                <Input type="number" min="0" {...register("maximum")} />
+                <Input type="number" min="0" {...register("maximum", { valueAsNumber: true })} />
               </Field>
               <Field label="Reorder point" error={errors.reorderPoint?.message}>
-                <Input type="number" min="0" {...register("reorderPoint")} />
+                <Input
+                  type="number"
+                  min="0"
+                  {...register("reorderPoint", { valueAsNumber: true })}
+                />
               </Field>
               <Field label="Reorder quantity" error={errors.reorderQuantity?.message}>
-                <Input type="number" min="0" {...register("reorderQuantity")} />
+                <Input
+                  type="number"
+                  min="0"
+                  {...register("reorderQuantity", { valueAsNumber: true })}
+                />
               </Field>
             </div>
           </div>

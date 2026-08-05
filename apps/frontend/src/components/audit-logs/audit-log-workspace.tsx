@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Activity, Download, Search, ShieldAlert, TriangleAlert, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 
@@ -76,12 +76,12 @@ export function AuditLogWorkspace() {
     });
   }, [moduleFilter, periodFilter, resultFilter, search, sensitivityFilter, userFilter]);
 
-  useEffect(() => {
-    setPage(0);
-  }, [moduleFilter, periodFilter, resultFilter, search, sensitivityFilter, userFilter]);
-
   const pageCount = Math.max(1, Math.ceil(filteredEntries.length / pageSize));
-  const pagedEntries = filteredEntries.slice(page * pageSize, page * pageSize + pageSize);
+  const currentPage = Math.min(page, pageCount - 1);
+  const pagedEntries = filteredEntries.slice(
+    currentPage * pageSize,
+    currentPage * pageSize + pageSize,
+  );
 
   const sensitiveCount = AUDIT_LOGS.filter((entry) => entry.sensitive).length;
   const failedCount = AUDIT_LOGS.filter((entry) => entry.result === "FAILED").length;
@@ -247,7 +247,7 @@ export function AuditLogWorkspace() {
           </div>
 
           <DataTablePagination
-            page={page}
+            page={currentPage}
             pageCount={pageCount}
             pageSize={pageSize}
             totalRows={filteredEntries.length}
