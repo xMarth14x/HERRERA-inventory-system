@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { type ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from "@tanstack/react-table";
 import { Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import type { Product } from "@/lib/product-data";
 import { ProductAvatar } from "./product-avatar";
@@ -109,6 +110,8 @@ export function ProductsTable({
     data: filtered,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination: { pageSize: 10 } },
   });
 
   return (
@@ -163,6 +166,14 @@ export function ProductsTable({
             )}
           </TableBody>
         </Table>
+
+        <DataTablePagination
+          page={table.getState().pagination.pageIndex}
+          pageCount={table.getPageCount()}
+          pageSize={table.getState().pagination.pageSize}
+          totalRows={filtered.length}
+          onPageChange={(page) => table.setPageIndex(page)}
+        />
       </CardContent>
     </Card>
   );

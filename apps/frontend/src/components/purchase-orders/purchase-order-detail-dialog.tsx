@@ -12,7 +12,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/dashboard/status-badge";
-import { statusColorForCode } from "@/lib/status-color";
+import { formatStatusLabel, statusColorForCode } from "@/lib/status-color";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/format";
 import { getPurchaseOrderTotals, type PurchaseOrder } from "@/lib/purchase-order-data";
 
@@ -39,7 +39,7 @@ export function PurchaseOrderDetailDialog({
                   </DialogDescription>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <StatusBadge color={statusColorForCode(order.status)} label={order.status} />
+                  <StatusBadge color={statusColorForCode(order.status)} label={formatStatusLabel(order.status)} />
                   <Button
                     size="icon-xs"
                     variant="outline"

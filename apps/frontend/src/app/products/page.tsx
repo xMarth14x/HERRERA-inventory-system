@@ -1,18 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { ProductsTable } from "@/components/products/products-table";
 import { ProductDetailDialog } from "@/components/products/product-detail-dialog";
-import { getProducts, type Product } from "@/lib/product-data";
+import { NewProductDialog } from "@/components/products/new-product-dialog";
+import {
+  collectBarcodes,
+  generateNextProductCode,
+  getProducts,
+  type Product,
+} from "@/lib/product-data";
 
 export default function ProductsPage() {
-  const products = getProducts();
+  const [products, setProducts] = useState<Product[]>(() => getProducts());
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  const existingBarcodes = useMemo(() => collectBarcodes(products), [products]);
+  const nextProductCode = useMemo(() => generateNextProductCode(products), [products]);
+
+  function handleCreate(product: Product) {
+    setProducts((current) => [product, ...current]);
+    setIsCreateOpen(false);
+    toast.success(`${product.name} added — barcode ${product.variants[0].barcode} generated automatically.`);
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -20,10 +36,10 @@ export default function ProductsPage() {
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
           <p className="text-sm text-muted-foreground">
-            Manage the product catalog and its variants.
+            Manage the product catalog and its variants. Every new product gets a unique barcode automatically.
           </p>
         </div>
-        <Button onClick={() => toast.info("Creating products isn't wired to the backend yet.")}>
+        <Button onClick={() => setIsCreateOpen(true)}>
           <Plus className="size-4" />
           New Product
         </Button>
@@ -41,6 +57,14 @@ export default function ProductsPage() {
         onOpenChange={(open) => {
           if (!open) setSelectedProduct(null);
         }}
+      />
+
+      <NewProductDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        existingBarcodes={existingBarcodes}
+        nextProductCode={nextProductCode}
+        onCreate={handleCreate}
       />
     </div>
   );

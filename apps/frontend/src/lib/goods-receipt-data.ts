@@ -200,8 +200,8 @@ export interface GoodsReceiptLineRow {
   deliveryDate: string;
 }
 
-export function getGoodsReceiptLineRows(): GoodsReceiptLineRow[] {
-  return GOODS_RECEIPTS.flatMap((gr) =>
+export function getGoodsReceiptLineRows(receipts: GoodsReceipt[] = GOODS_RECEIPTS): GoodsReceiptLineRow[] {
+  return receipts.flatMap((gr) =>
     gr.items.map((item) => {
       const remaining = item.orderedQuantity - (item.previouslyReceivedQuantity + item.currentReceivedQuantity);
       return {

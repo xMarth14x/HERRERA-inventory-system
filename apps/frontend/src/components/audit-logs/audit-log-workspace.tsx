@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Activity, Download, Search, ShieldAlert, TriangleAlert, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 
@@ -9,6 +9,8 @@ import { AuditResultBadge, SensitiveBadge } from "@/components/audit-logs/audit-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { SummaryCard } from "@/components/shared/summary-card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -38,6 +40,8 @@ export function AuditLogWorkspace() {
   const [sensitivityFilter, setSensitivityFilter] = useState(ALL);
   const [periodFilter, setPeriodFilter] = useState("30");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
 
   const users = useMemo(() => [...new Set(AUDIT_LOGS.map((entry) => entry.user))].sort(), []);
   const selectedEntry = AUDIT_LOGS.find((entry) => entry.id === selectedId) ?? null;
@@ -71,6 +75,13 @@ export function AuditLogWorkspace() {
         .includes(term);
     });
   }, [moduleFilter, periodFilter, resultFilter, search, sensitivityFilter, userFilter]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [moduleFilter, periodFilter, resultFilter, search, sensitivityFilter, userFilter]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredEntries.length / pageSize));
+  const pagedEntries = filteredEntries.slice(page * pageSize, page * pageSize + pageSize);
 
   const sensitiveCount = AUDIT_LOGS.filter((entry) => entry.sensitive).length;
   const failedCount = AUDIT_LOGS.filter((entry) => entry.result === "FAILED").length;
@@ -106,24 +117,23 @@ export function AuditLogWorkspace() {
 
   return (
     <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-semibold tracking-tight">Audit Logs</h1>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard icon={Activity} label="Total Events" value={formatNumber(AUDIT_LOGS.length)} detail="Immutable activity records" tone="blue" />
+        <SummaryCard icon={ShieldAlert} label="Sensitive Events" value={formatNumber(sensitiveCount)} detail="Protected activities" tone="amber" />
+        <SummaryCard icon={TriangleAlert} label="Failed Events" value={formatNumber(failedCount)} detail="Security review required" tone="red" />
+        <SummaryCard icon={UsersRound} label="Unique Users" value={formatNumber(uniqueUsers)} detail="Recorded actors" tone="green" />
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Audit Logs</h1>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            Review immutable user activity, record changes, security events, approvals, and system configuration changes.
-          </p>
-        </div>
+        <p className="max-w-2xl text-sm text-muted-foreground">
+          Review immutable user activity, record changes, security events, approvals, and system configuration changes.
+        </p>
         <Button onClick={exportCsv} disabled={filteredEntries.length === 0}>
           <Download className="size-4" />
           Export audit log
         </Button>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard icon={Activity} label="Total events" value={AUDIT_LOGS.length} detail="Immutable activity records" tone="blue" />
-        <SummaryCard icon={ShieldAlert} label="Sensitive events" value={sensitiveCount} detail="Protected activities" tone="amber" />
-        <SummaryCard icon={TriangleAlert} label="Failed events" value={failedCount} detail="Security review required" tone="red" />
-        <SummaryCard icon={UsersRound} label="Unique users" value={uniqueUsers} detail="Recorded actors" tone="green" />
       </div>
 
       <Card className="gap-3">
@@ -200,7 +210,7 @@ export function AuditLogWorkspace() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredEntries.map((entry) => (
+                  pagedEntries.map((entry) => (
                     <TableRow
                       key={entry.id}
                       className="cursor-pointer"
@@ -236,10 +246,14 @@ export function AuditLogWorkspace() {
             </Table>
           </div>
 
-          <div className="flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
-            <span>{filteredEntries.length} {filteredEntries.length === 1 ? "event" : "events"}</span>
-            <span>Audit records are view-only and cannot be deleted</span>
-          </div>
+          <DataTablePagination
+            page={page}
+            pageCount={pageCount}
+            pageSize={pageSize}
+            totalRows={filteredEntries.length}
+            onPageChange={setPage}
+          />
+          <p className="text-xs text-muted-foreground">Audit records are view-only and cannot be deleted</p>
         </CardContent>
       </Card>
 
@@ -274,40 +288,5 @@ function FilterSelect({
         <SelectContent>{children}</SelectContent>
       </Select>
     </div>
-  );
-}
-
-function SummaryCard({
-  icon: Icon,
-  label,
-  value,
-  detail,
-  tone,
-}: {
-  icon: typeof Activity;
-  label: string;
-  value: number;
-  detail: string;
-  tone: "blue" | "amber" | "red" | "green";
-}) {
-  const tones = {
-    blue: "bg-blue-50 text-blue-700",
-    amber: "bg-amber-50 text-amber-800",
-    red: "bg-red-50 text-red-700",
-    green: "bg-emerald-50 text-emerald-700",
-  };
-  return (
-    <Card size="sm">
-      <CardContent className="flex items-center gap-3">
-        <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-lg", tones[tone])}>
-          <Icon className="size-5" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="text-xl font-semibold tabular-nums">{formatNumber(value)}</p>
-          <p className="truncate text-xs text-muted-foreground">{detail}</p>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

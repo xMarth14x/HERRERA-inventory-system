@@ -6,12 +6,42 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { convertUnits, UNITS } from "@/lib/catalog-data";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { convertUnits, UNITS, type UnitDimension } from "@/lib/catalog-data";
+
+const DIMENSIONS: UnitDimension[] = ["Count", "Weight", "Volume"];
 
 function formatResult(value: number): string {
   if (!Number.isFinite(value)) return "0";
   return value.toLocaleString("en-US", { maximumFractionDigits: 4 });
+}
+
+function UnitSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={(v) => v && onChange(v)}>
+      <SelectTrigger className="min-w-36">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {DIMENSIONS.map((dimension) => (
+          <SelectGroup key={dimension}>
+            <SelectLabel>{dimension}</SelectLabel>
+            {UNITS.filter((unit) => unit.dimension === dimension).map((unit) => (
+              <SelectItem key={unit.code} value={unit.code}>
+                {unit.name}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 export function UnitConverter() {
@@ -19,14 +49,15 @@ export function UnitConverter() {
   const [fromUnit, setFromUnit] = useState("box");
   const [toUnit, setToUnit] = useState("pc");
 
+  const fromMeta = UNITS.find((u) => u.code === fromUnit);
+  const toMeta = UNITS.find((u) => u.code === toUnit);
+  const sameDimension = fromMeta?.dimension === toMeta?.dimension;
+
   const result = useMemo(() => {
     const qty = Number(quantity);
     if (Number.isNaN(qty)) return null;
     return convertUnits(qty, fromUnit, toUnit);
   }, [quantity, fromUnit, toUnit]);
-
-  const fromLabel = UNITS.find((u) => u.code === fromUnit)?.name ?? fromUnit;
-  const toLabel = UNITS.find((u) => u.code === toUnit)?.name ?? toUnit;
 
   function swap() {
     setFromUnit(toUnit);
@@ -56,18 +87,7 @@ export function UnitConverter() {
 
           <div className="flex flex-col gap-1.5">
             <Label className="text-xs text-muted-foreground">From</Label>
-            <Select value={fromUnit} onValueChange={(v) => v && setFromUnit(v)}>
-              <SelectTrigger className="min-w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {UNITS.map((unit) => (
-                  <SelectItem key={unit.code} value={unit.code}>
-                    {unit.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <UnitSelect value={fromUnit} onChange={setFromUnit} />
           </div>
 
           <Button
@@ -83,18 +103,7 @@ export function UnitConverter() {
 
           <div className="flex flex-col gap-1.5">
             <Label className="text-xs text-muted-foreground">To</Label>
-            <Select value={toUnit} onValueChange={(v) => v && setToUnit(v)}>
-              <SelectTrigger className="min-w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {UNITS.map((unit) => (
-                  <SelectItem key={unit.code} value={unit.code}>
-                    {unit.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <UnitSelect value={toUnit} onChange={setToUnit} />
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -105,11 +114,18 @@ export function UnitConverter() {
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          {quantity || 0} {fromLabel}
-          {Number(quantity) === 1 ? "" : "s"} = {result === null ? "—" : formatResult(result)} {toLabel}
-          {result === 1 ? "" : "s"}
-        </p>
+        {sameDimension ? (
+          <p className="text-xs text-muted-foreground">
+            {quantity || 0} {fromMeta?.name}
+            {Number(quantity) === 1 ? "" : "s"} = {result === null ? "—" : formatResult(result)} {toMeta?.name}
+            {result === 1 ? "" : "s"}
+          </p>
+        ) : (
+          <p className="rounded-lg border border-dashed p-2.5 text-xs text-muted-foreground">
+            {fromMeta?.name} ({fromMeta?.dimension}) and {toMeta?.name} ({toMeta?.dimension}) are different kinds of
+            measurement — pick two units of the same type to convert between them.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

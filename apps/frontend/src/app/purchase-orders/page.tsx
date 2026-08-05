@@ -37,24 +37,23 @@ export default function PurchaseOrdersPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-semibold tracking-tight">Purchase Order</h1>
+
+      <StatusSummary statuses={PURCHASE_ORDER_STATUSES} counts={counts} />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Purchase Order</h1>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            The Purchase Order module is included in the first production release. A{" "}
-            <Link href="/purchase-requests" className="font-medium text-primary hover:underline">
-              purchase request
-            </Link>{" "}
-            is submitted and approved before it converts into a purchase order.
-          </p>
-        </div>
+        <p className="max-w-2xl text-sm text-muted-foreground">
+          The Purchase Order module is included in the first production release. A{" "}
+          <Link href="/purchase-requests" className="font-medium text-primary hover:underline">
+            purchase request
+          </Link>{" "}
+          is submitted and approved before it converts into a purchase order.
+        </p>
         <Button onClick={() => toast.info("Creating purchase orders isn't wired to the backend yet.")}>
           <Plus className="size-4" />
           New Purchase Order
         </Button>
       </div>
-
-      <StatusSummary statuses={PURCHASE_ORDER_STATUSES} counts={counts} />
 
       <PurchaseOrdersTable
         data={rows}

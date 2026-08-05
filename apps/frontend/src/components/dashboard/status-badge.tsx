@@ -23,7 +23,7 @@ const DOT_CLASSES: Record<StatusColor, string> = {
 export function StatusBadge({ color, label }: { color: StatusColor; label: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${COLOR_CLASSES[color]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium lowercase ring-1 ring-inset ${COLOR_CLASSES[color]}`}
     >
       <span className={`size-1.5 rounded-full ${DOT_CLASSES[color]}`} aria-hidden />
       {label}

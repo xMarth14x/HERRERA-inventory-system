@@ -328,3 +328,45 @@ const MOCK_PRODUCTS: Product[] = [
 export function getProducts(): Product[] {
   return MOCK_PRODUCTS;
 }
+
+/**
+ * Resolves a scanned or typed value to a product variant — checked against
+ * barcode first (what a scanner sends), then SKU (what a person might type).
+ * Shared by every "scan to find/select a product" feature across the app.
+ */
+export function findVariantByCode(
+  code: string,
+  products: Product[] = MOCK_PRODUCTS,
+): { product: Product; variant: ProductVariant } | null {
+  const term = code.trim().toLowerCase();
+  if (!term) return null;
+  for (const product of products) {
+    for (const variant of product.variants) {
+      if (variant.barcode.toLowerCase() === term || variant.sku.toLowerCase() === term) {
+        return { product, variant };
+      }
+    }
+  }
+  return null;
+}
+
+/** All barcodes currently in use across the catalog, for uniqueness checks. */
+export function collectBarcodes(products: Product[]): Set<string> {
+  const barcodes = new Set<string>();
+  for (const product of products) {
+    for (const variant of product.variants) {
+      barcodes.add(variant.barcode);
+    }
+  }
+  return barcodes;
+}
+
+/** Next sequential product code, e.g. PRD-0010, based on the highest existing one. */
+export function generateNextProductCode(products: Product[]): string {
+  const highest = products.reduce((max, product) => {
+    const match = /^PRD-(\d+)$/.exec(product.productCode);
+    if (!match) return max;
+    return Math.max(max, Number(match[1]));
+  }, 0);
+  return `PRD-${String(highest + 1).padStart(4, "0")}`;
+}

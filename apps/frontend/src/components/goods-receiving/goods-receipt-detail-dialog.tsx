@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { toast } from "sonner";
-import { FileText, Download } from "lucide-react";
+import { Barcode, Download, FileText, ScanLine } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,18 +12,55 @@ import {
 } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/dashboard/status-badge";
-import { statusColorForCode } from "@/lib/status-color";
+import { formatStatusLabel, statusColorForCode } from "@/lib/status-color";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/format";
+import { findVariantByCode } from "@/lib/product-data";
 import type { GoodsReceipt } from "@/lib/goods-receipt-data";
 
 export function GoodsReceiptDetailDialog({
   receipt,
   onOpenChange,
+  onUpdate,
 }: {
   receipt: GoodsReceipt | null;
   onOpenChange: (open: boolean) => void;
+  onUpdate: (receipt: GoodsReceipt) => void;
 }) {
+  const [scan, setScan] = useState("");
+
+  function handleBarcodeSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!receipt) return;
+    const term = scan.trim();
+    if (!term) return;
+
+    // Accepts either a real scanned barcode or a typed SKU — resolve the
+    // barcode to its SKU first, then match that against this receipt's lines.
+    const resolved = findVariantByCode(term);
+    const sku = resolved?.variant.sku ?? term;
+    const item = receipt.items.find((i) => i.sku.toLowerCase() === sku.toLowerCase());
+    if (!item) {
+      toast.error(`No line item on this receipt matches "${term}".`);
+      return;
+    }
+
+    const remaining = item.orderedQuantity - (item.previouslyReceivedQuantity + item.currentReceivedQuantity);
+    if (remaining <= 0) {
+      toast.info(`${item.productName} is already fully received.`);
+      setScan("");
+      return;
+    }
+
+    const updatedItems = receipt.items.map((i) =>
+      i.sku === item.sku ? { ...i, currentReceivedQuantity: i.currentReceivedQuantity + 1 } : i,
+    );
+    onUpdate({ ...receipt, items: updatedItems });
+    setScan("");
+    toast.success(`+1 received for ${item.productName}.`);
+  }
+
   return (
     <Dialog open={receipt !== null} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
@@ -43,6 +81,29 @@ export function GoodsReceiptDetailDialog({
               <Field label="Delivery Receipt #" value={receipt.deliveryReceiptNumber} />
               <Field label="Supplier Invoice #" value={receipt.supplierInvoiceNumber} />
             </div>
+
+            <form
+              onSubmit={handleBarcodeSubmit}
+              className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-end"
+            >
+              <div className="flex-1">
+                <label htmlFor="gr-barcode" className="mb-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Barcode className="size-3.5" />
+                  Barcode or SKU
+                </label>
+                <Input
+                  id="gr-barcode"
+                  value={scan}
+                  onChange={(event) => setScan(event.target.value)}
+                  placeholder="Scan a barcode or enter a SKU to log one more unit received…"
+                  autoComplete="off"
+                />
+              </div>
+              <Button type="submit" variant="outline" disabled={!scan.trim()}>
+                <ScanLine className="size-4" />
+                Add scan
+              </Button>
+            </form>
 
             <div>
               <h3 className="mb-2 text-sm font-semibold">Product</h3>
@@ -105,7 +166,7 @@ export function GoodsReceiptDetailDialog({
                   item.orderedQuantity - (item.previouslyReceivedQuantity + item.currentReceivedQuantity);
                 const status = remaining <= 0 ? "FULLY_RECEIVED" : "PARTIALLY_RECEIVED";
                 return (
-                  <StatusBadge key={item.sku} color={statusColorForCode(status)} label={`PO Status: ${status}`} />
+                  <StatusBadge key={item.sku} color={statusColorForCode(status)} label={`PO Status: ${formatStatusLabel(status)}`} />
                 );
               })}
             </div>

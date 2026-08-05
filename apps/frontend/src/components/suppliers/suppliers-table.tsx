@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo } from "react";
-import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { type ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from "@tanstack/react-table";
 import { Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { StatusBadge } from "@/components/dashboard/status-badge";
+import { formatStatusLabel } from "@/lib/status-color";
 import type { Supplier } from "@/lib/supplier-data";
 
 export function SuppliersTable({
@@ -68,14 +70,14 @@ export function SuppliersTable({
         cell: ({ row }) => {
           const status = row.original.bankDetails.status;
           const color = status === "Verified" ? "green" : status === "Pending" ? "amber" : "red";
-          return <StatusBadge color={color} label={status} />;
+          return <StatusBadge color={color} label={formatStatusLabel(status)} />;
         },
       },
       {
         id: "status",
         header: "Status",
         cell: ({ row }) => (
-          <StatusBadge color={row.original.status === "Active" ? "green" : "gray"} label={row.original.status} />
+          <StatusBadge color={row.original.status === "Active" ? "green" : "gray"} label={formatStatusLabel(row.original.status)} />
         ),
       },
     ],
@@ -86,6 +88,8 @@ export function SuppliersTable({
     data: filtered,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination: { pageSize: 10 } },
   });
 
   return (
@@ -140,6 +144,14 @@ export function SuppliersTable({
             )}
           </TableBody>
         </Table>
+
+        <DataTablePagination
+          page={table.getState().pagination.pageIndex}
+          pageCount={table.getPageCount()}
+          pageSize={table.getState().pagination.pageSize}
+          totalRows={filtered.length}
+          onPageChange={(page) => table.setPageIndex(page)}
+        />
       </CardContent>
     </Card>
   );

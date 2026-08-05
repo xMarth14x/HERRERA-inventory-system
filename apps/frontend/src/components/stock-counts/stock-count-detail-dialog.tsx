@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatNumber } from "@/lib/format";
+import { findVariantByCode } from "@/lib/product-data";
 import {
   getEffectiveCount,
   getLineVariance,
@@ -59,12 +60,15 @@ export function StockCountDetailDialog({
 
   function handleBarcodeSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const code = barcode.trim().toLowerCase();
-    if (!code || !canScan) return;
+    const term = barcode.trim();
+    if (!term || !canScan) return;
 
-    const line = currentCount.lines.find((item) => item.sku.toLowerCase() === code);
+    // Accepts either a real scanned barcode or a typed SKU.
+    const resolved = findVariantByCode(term);
+    const sku = (resolved?.variant.sku ?? term).toLowerCase();
+    const line = currentCount.lines.find((item) => item.sku.toLowerCase() === sku);
     if (!line) {
-      toast.error(`No product found for barcode or SKU “${barcode.trim()}”.`);
+      toast.error(`No product found for barcode or SKU “${term}”.`);
       return;
     }
 

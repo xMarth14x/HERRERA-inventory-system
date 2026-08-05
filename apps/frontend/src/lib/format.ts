@@ -59,3 +59,8 @@ export function daysUntil(iso: string): number {
   const diffMs = new Date(iso).getTime() - Date.now();
   return Math.ceil(diffMs / (24 * 60 * 60 * 1000));
 }
+
+/** "for approval" -> "For Approval" — every word capitalized, for card labels/headings. */
+export function toTitleCase(text: string): string {
+  return text.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+}
