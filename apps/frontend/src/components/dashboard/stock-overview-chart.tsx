@@ -1,6 +1,6 @@
 "use client";
 
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatNumber } from "@/lib/format";
@@ -14,12 +14,12 @@ const SERIES = [
 
 export function StockOverviewChart({ data }: { data: StockTrendPoint[] }) {
   return (
-    <Card className="gap-3">
+    <Card className="gap-3 bg-gradient-to-br from-[#eef4ff] to-white">
       <CardHeader className="flex-row items-center justify-between gap-3">
-        <CardTitle>Stock Overview</CardTitle>
+        <CardTitle className="text-lg text-[#0a43b8]">Stock Overview</CardTitle>
         <div className="flex flex-wrap justify-end gap-4">
           {SERIES.map((series) => (
-            <span key={series.key} className="flex items-center gap-1.5 text-xs text-[#33405d]">
+            <span key={series.key} className="flex items-center gap-1.5 text-xs font-medium text-[#33405d]">
               <span className="size-2.5 rounded-full" style={{ backgroundColor: series.color }} />
               {series.label}
             </span>
@@ -29,7 +29,13 @@ export function StockOverviewChart({ data }: { data: StockTrendPoint[] }) {
       <CardContent>
         <div className="h-[285px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 10, right: 12, left: 4, bottom: 0 }}>
+            <ComposedChart data={data} margin={{ top: 10, right: 12, left: 4, bottom: 0 }}>
+              <defs>
+                <linearGradient id="inStockFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#0a43b8" stopOpacity={0.22} />
+                  <stop offset="100%" stopColor="#0a43b8" stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid stroke="#e4e9f1" vertical={false} />
               <XAxis dataKey="month" axisLine={{ stroke: "#dfe5ef" }} tickLine={false} tick={{ fill: "#65708a", fontSize: 12 }} />
               <YAxis tickFormatter={(value) => `${Number(value) / 1000}K`} axisLine={false} tickLine={false} tick={{ fill: "#65708a", fontSize: 12 }} width={38} />
@@ -37,18 +43,26 @@ export function StockOverviewChart({ data }: { data: StockTrendPoint[] }) {
                 formatter={(value, name) => [formatNumber(Number(value)), SERIES.find((series) => series.key === name)?.label ?? String(name)]}
                 contentStyle={{ borderRadius: 10, borderColor: "#dfe5ef", boxShadow: "0 8px 24px rgba(22,44,84,.12)" }}
               />
+              <Area
+                type="monotone"
+                dataKey="inStock"
+                stroke="none"
+                fill="url(#inStockFill)"
+                isAnimationActive={false}
+                legendType="none"
+              />
               {SERIES.map((series) => (
                 <Line
                   key={series.key}
                   type="monotone"
                   dataKey={series.key}
                   stroke={series.color}
-                  strokeWidth={2.5}
-                  dot={{ r: 3.5, fill: series.color, strokeWidth: 0 }}
-                  activeDot={{ r: 5 }}
+                  strokeWidth={2.75}
+                  dot={{ r: 4.5, fill: series.color, strokeWidth: 2, stroke: "white" }}
+                  activeDot={{ r: 6 }}
                 />
               ))}
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </CardContent>

@@ -119,10 +119,6 @@ export const inventoryBalancesContent: ModuleContent = {
       heading: "Balance Types",
       items: ["On Hand", "Reserved", "Available", "In Transit", "Damaged", "Quarantined"],
     },
-    {
-      heading: "Formula",
-      example: [{ label: "Available Quantity", value: "On Hand − Reserved" }],
-    },
   ],
 };
 
@@ -151,11 +147,6 @@ export const stockMovementLedgerContent = {
 export const barcodeSupportContent: ModuleContent = {
   title: "Barcode Support",
   description:
-    "The initial system will support USB barcode scanners that operate as keyboard input devices. Mobile-camera barcode scanning may be added later.",
-  sections: [
-    {
-      heading: "Where Barcodes Are Used",
-      items: ["Product lookup", "Receiving", "Stock issue", "Transfers", "Stock counting", "Product verification"],
-    },
-  ],
+    "Every product gets a unique, auto-generated Code128 barcode — try it in the tools below. The system supports USB barcode scanners that operate as keyboard input devices; mobile-camera scanning may be added later.",
+  sections: [],
 };

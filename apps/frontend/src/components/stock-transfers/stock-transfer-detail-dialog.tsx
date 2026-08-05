@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { toast } from "sonner";
-import { ArrowRight, FileText, Download } from "lucide-react";
+import { ArrowRight, Barcode, FileText, Download, ScanLine } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,19 +12,53 @@ import {
 } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/dashboard/status-badge";
-import { statusColorForCode } from "@/lib/status-color";
+import { formatStatusLabel, statusColorForCode } from "@/lib/status-color";
 import { formatDate, formatNumber } from "@/lib/format";
+import { findVariantByCode } from "@/lib/product-data";
 import type { StockTransfer } from "@/lib/stock-transfer-data";
 import { DiscrepancyBadge } from "./discrepancy-badge";
 
 export function StockTransferDetailDialog({
   transfer,
   onOpenChange,
+  onUpdate,
 }: {
   transfer: StockTransfer | null;
   onOpenChange: (open: boolean) => void;
+  onUpdate: (transfer: StockTransfer) => void;
 }) {
+  const [scan, setScan] = useState("");
+
+  function handleBarcodeSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!transfer) return;
+    const term = scan.trim();
+    if (!term) return;
+
+    const resolved = findVariantByCode(term);
+    const sku = resolved?.variant.sku ?? term;
+    const item = transfer.items.find((i) => i.sku.toLowerCase() === sku.toLowerCase());
+    if (!item) {
+      toast.error(`No line item on this transfer matches "${term}".`);
+      return;
+    }
+
+    if (item.receivedQuantity >= item.dispatchedQuantity) {
+      toast.info(`${item.productName} has already received all dispatched units.`);
+      setScan("");
+      return;
+    }
+
+    const updatedItems = transfer.items.map((i) =>
+      i.sku === item.sku ? { ...i, receivedQuantity: i.receivedQuantity + 1 } : i,
+    );
+    onUpdate({ ...transfer, items: updatedItems });
+    setScan("");
+    toast.success(`+1 received for ${item.productName}.`);
+  }
+
   return (
     <Dialog open={transfer !== null} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -39,7 +74,7 @@ export function StockTransferDetailDialog({
                     <span>{transfer.destinationLocation}</span>
                   </DialogDescription>
                 </div>
-                <StatusBadge color={statusColorForCode(transfer.status)} label={transfer.status} />
+                <StatusBadge color={statusColorForCode(transfer.status)} label={formatStatusLabel(transfer.status)} />
               </div>
             </DialogHeader>
 
@@ -49,6 +84,29 @@ export function StockTransferDetailDialog({
               <Field label="Dispatched" value={transfer.dispatchedAt ? formatDate(transfer.dispatchedAt) : "—"} />
               <Field label="Received" value={transfer.receivedAt ? formatDate(transfer.receivedAt) : "—"} />
             </div>
+
+            <form
+              onSubmit={handleBarcodeSubmit}
+              className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-end"
+            >
+              <div className="flex-1">
+                <label htmlFor="transfer-barcode" className="mb-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Barcode className="size-3.5" />
+                  Barcode or SKU
+                </label>
+                <Input
+                  id="transfer-barcode"
+                  value={scan}
+                  onChange={(event) => setScan(event.target.value)}
+                  placeholder="Scan a barcode or enter a SKU to log one more unit received…"
+                  autoComplete="off"
+                />
+              </div>
+              <Button type="submit" variant="outline" disabled={!scan.trim()}>
+                <ScanLine className="size-4" />
+                Add scan
+              </Button>
+            </form>
 
             <div>
               <h3 className="mb-2 text-sm font-semibold">Products</h3>

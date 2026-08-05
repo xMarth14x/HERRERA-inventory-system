@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Box, CheckCircle2, CircleHelp, Loader2, Lock, LogIn, User, Warehouse } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, LogIn, Mail } from "lucide-react";
 
 import { apiFetch, ApiError } from "@/lib/api";
 import { setAccessToken, type LoginResponse } from "@/lib/auth";
@@ -18,10 +19,17 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+// =w1920 pulls the largest version this CDN actually stores (1365x746 — it
+// caps there regardless of the requested width) instead of the ~512x280
+// thumbnail the bare URL serves, which was being stretched full-screen.
+const BACKGROUND_IMAGE_URL =
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuB-UYGgtTx1_pvdV-7aj-0k6mVEtpf6SdroEUgalhxzR7H03zpk0RkDisFeWpPALPl42F02ScSb-WQKvLee0-hu0mG0XGXCEDDuV1bS0YKSTFZSNRZf3O8Mui_vKMkYCRUAasoXS9zMziB4pw4_YTxb0JCkNU4WkPLj6tSs8f39QtSlgWhFkakp5txv8nSZasilxqJNY3JgvPEf-akrcw3_Lw5E2qfP6-y1O5CEiC3XQyLUTeeWzQxiVI-cWHeVs2TYUA8=w1920";
+
 export default function LoginPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [shake, setShake] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -53,97 +61,125 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-screen bg-[#f4f7fb] text-[#10172a] lg:grid-cols-[minmax(360px,0.82fr)_minmax(520px,1.18fr)]">
-      <aside className="relative hidden overflow-hidden bg-gradient-to-b from-[#0b47bd] via-[#073b9f] to-[#062e7e] text-white lg:flex lg:flex-col">
-        <div className="flex h-28 items-center gap-3 bg-gradient-to-br from-[#f21934] to-[#df1229] px-8 shadow-lg">
-          <span className="flex size-12 items-center justify-center rounded-xl border-2 border-white/85 bg-white/10">
-            <Box className="size-7" />
-          </span>
-          <div>
-            <p className="text-2xl font-extrabold tracking-tight">HERRERA</p>
-            <p className="text-xs text-white/85">Inventory Management</p>
-          </div>
-        </div>
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#0c1a3a] p-4 text-gray-800 sm:p-8">
+      {/* Background photo, slow Ken Burns zoom */}
+      <div
+        aria-hidden
+        className="animate-ken-burns absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url('${BACKGROUND_IMAGE_URL}')` }}
+      />
+      {/* Top/bottom darken for header and footer legibility */}
+      <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/10 to-black/60" />
+      {/* Vignette to focus attention on the card */}
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(12,26,58,0.05),rgba(6,13,32,0.6)_115%)]"
+      />
 
-        <div className="relative z-10 flex flex-1 flex-col justify-center px-10 py-12 xl:px-16">
-          <span className="mb-6 flex size-14 items-center justify-center rounded-2xl bg-[#ffd21f] text-[#09245d] shadow-lg">
-            <Warehouse className="size-7" />
-          </span>
-          <h1 className="max-w-md text-4xl font-extrabold leading-tight tracking-tight">
-            Complete visibility across every item and location.
-          </h1>
-          <p className="mt-4 max-w-lg text-base leading-7 text-blue-100/85">
-            Control purchasing, receiving, stock movement, counting, alerts, reporting, and approvals from one secure workspace.
-          </p>
-          <div className="mt-8 grid max-w-md gap-3 sm:grid-cols-2">
-            {["Real-time stock control", "Approval workflows", "Operational reporting", "Immutable audit trail"].map((item) => (
-              <span key={item} className="flex items-center gap-2 text-sm text-white/90">
-                <CheckCircle2 className="size-4 text-[#ffd21f]" />
-                {item}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div aria-hidden className="absolute -right-24 -bottom-20 size-80 rounded-full border-[42px] border-white/5" />
-        <div aria-hidden className="absolute right-24 bottom-24 size-24 rounded-full bg-[#ed1b2f]/25 blur-2xl" />
-      </aside>
-
-      <main className="flex min-h-screen flex-col">
-        <header className="flex h-20 items-center justify-between border-b border-slate-200 bg-white px-5 md:px-8">
-          <div className="flex items-center gap-3 lg:hidden">
-            <span className="flex size-10 items-center justify-center rounded-lg bg-[#ed1b2f] text-white"><Box className="size-5" /></span>
-            <div><p className="font-extrabold">HERRERA</p><p className="text-[10px] text-muted-foreground">Inventory Management</p></div>
-          </div>
-          <p className="hidden text-sm text-muted-foreground lg:block">Secure inventory operations portal</p>
-          <button type="button" aria-label="Help" onClick={() => toast.info("Contact your system administrator for access support.")} className="flex size-9 items-center justify-center rounded-full text-[#0a43b8] hover:bg-blue-50">
-            <CircleHelp className="size-5" />
-          </button>
-        </header>
-
-        <div className="relative flex flex-1 items-center justify-center overflow-hidden p-5 md:p-10">
-          <div aria-hidden className="absolute top-10 right-10 size-72 rounded-full bg-blue-100/50 blur-3xl" />
-          <div aria-hidden className="absolute bottom-0 left-0 size-64 rounded-full bg-yellow-100/50 blur-3xl" />
-
-          <section key={shake} className={`relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-7 shadow-[0_20px_60px_rgba(22,44,84,0.13)] md:p-9 ${shake ? "animate-shake" : ""}`}>
-            <div className="mb-8">
-              <span className="mb-5 flex size-12 items-center justify-center rounded-full bg-red-50 text-[#ed1b2f]"><Lock className="size-5" /></span>
-              <h1 className="text-3xl font-extrabold tracking-tight">Welcome back</h1>
-              <p className="mt-2 text-sm text-muted-foreground">Sign in to Herrera Inventory Management.</p>
+      <main className="relative z-10 flex w-full max-w-md flex-col items-center justify-center">
+        <section
+          key={shake}
+          className={`relative w-full animate-fade-in-up overflow-hidden rounded-2xl border border-white/20 bg-[#062e7e]/90 p-8 shadow-[0_25px_70px_rgba(6,13,32,0.55)] backdrop-blur-md lg:p-12 ${shake ? "animate-shake" : ""}`}
+        >
+          <div className="relative z-10">
+            <div className="mb-8 flex items-center justify-center gap-3">
+              <div className="flex size-16 items-center justify-center overflow-hidden rounded-lg shadow-sm">
+                <Image src="/bigstop-logo.png" alt="BigStop logo" width={64} height={64} className="size-full object-cover" priority />
+              </div>
+              <div className="text-left">
+                <h1 className="text-2xl leading-tight font-bold text-white">BigStop</h1>
+                <p className="text-xs font-medium text-blue-100/80">Inventory Management</p>
+              </div>
             </div>
 
-            <form className="flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)} noValidate>
-              <div>
-                <label htmlFor="email" className="mb-1.5 block text-sm font-semibold">Email address</label>
-                <div className="relative">
-                  <User className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <input id="email" type="email" autoComplete="email" placeholder="you@herrera.local" aria-invalid={!!errors.email} className="h-11 w-full rounded-lg border border-slate-300 bg-white pr-3 pl-10 text-sm outline-none transition focus:border-[#0a43b8] focus:ring-3 focus:ring-blue-100 aria-invalid:border-[#ed1b2f]" {...register("email")} />
-                </div>
-                {errors.email ? <p className="mt-1.5 text-xs text-[#ed1b2f]">{errors.email.message}</p> : null}
-              </div>
+            <div className="mb-10 text-center">
+              <h3 className="mb-2 text-3xl font-bold text-white">Welcome back!</h3>
+              <p className="text-base text-blue-100/80">Sign in to continue to your account</p>
+            </div>
 
-              <div>
-                <div className="mb-1.5 flex items-center justify-between">
-                  <label htmlFor="password" className="text-sm font-semibold">Password</label>
-                  <button type="button" onClick={() => toast.info("Password reset isn't available yet.")} className="text-xs font-semibold text-[#0a43b8] hover:underline">Forgot password?</button>
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
+            <div>
+              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-blue-50">
+                Email address
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                  <Mail className="size-5 text-gray-400" />
                 </div>
-                <div className="relative">
-                  <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <input id="password" type="password" autoComplete="current-password" placeholder="Enter your password" aria-invalid={!!errors.password} className="h-11 w-full rounded-lg border border-slate-300 bg-white pr-3 pl-10 text-sm outline-none transition focus:border-[#0a43b8] focus:ring-3 focus:ring-blue-100 aria-invalid:border-[#ed1b2f]" {...register("password")} />
-                </div>
-                {errors.password ? <p className="mt-1.5 text-xs text-[#ed1b2f]">{errors.password.message}</p> : null}
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="Enter your email"
+                  aria-invalid={!!errors.email}
+                  className="block w-full rounded-lg border border-gray-300 bg-white/90 py-3.5 pr-3 pl-12 text-base shadow-sm outline-none transition-all duration-300 focus:border-[#1e3a8a] focus:shadow-md focus:ring-2 focus:ring-[#1e3a8a]/20 aria-invalid:border-[#ef4444] aria-invalid:focus:ring-[#ef4444]/20"
+                  {...register("email")}
+                />
               </div>
+              {errors.email ? <p className="mt-1.5 text-xs text-[#ef4444]">{errors.email.message}</p> : null}
+            </div>
 
-              <button type="submit" disabled={isSubmitting} className="mt-1 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#ed1b2f] to-[#df1229] text-sm font-bold text-white shadow-md transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60">
-                {isSubmitting ? <><Loader2 className="size-4 animate-spin" /> Signing in...</> : <><LogIn className="size-4" /> Sign in</>}
+            <div>
+              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-blue-50">
+                Password
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                  <Lock className="size-5 text-gray-400" />
+                </div>
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  aria-invalid={!!errors.password}
+                  className="block w-full rounded-lg border border-gray-300 bg-white/90 py-3.5 pr-12 pl-12 text-base shadow-sm outline-none transition-all duration-300 focus:border-[#1e3a8a] focus:shadow-md focus:ring-2 focus:ring-[#1e3a8a]/20 aria-invalid:border-[#ef4444] aria-invalid:focus:ring-[#ef4444]/20"
+                  {...register("password")}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 transition-colors hover:text-gray-500 focus:text-gray-500 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                </button>
+              </div>
+              {errors.password ? <p className="mt-1.5 text-xs text-[#ef4444]">{errors.password.message}</p> : null}
+            </div>
+
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => toast.info("Password reset isn't available yet.")}
+                className="text-sm font-medium text-[#ef4444] transition-colors hover:text-red-500"
+              >
+                Forgot password?
               </button>
-            </form>
-          </section>
-        </div>
+            </div>
 
-        <footer className="border-t border-slate-200 bg-white px-5 py-4 text-center text-xs text-muted-foreground">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-transparent bg-[#ffd21f] px-4 py-3.5 text-base font-semibold text-[#09245d] shadow-sm transition-all duration-300 hover:scale-[1.02] hover:bg-[#ffc400] hover:shadow-md focus:ring-2 focus:ring-[#ffd21f] focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" /> Signing in...
+                </>
+              ) : (
+                <>
+                  <LogIn className="size-4" /> Log in
+                </>
+              )}
+            </button>
+          </form>
+          </div>
+        </section>
+
+        <p className="relative z-10 mt-6 text-xs text-white/90 drop-shadow-md">
           © {new Date().getFullYear()} Herrera Technologies. All rights reserved.
-        </footer>
+        </p>
       </main>
     </div>
   );

@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BarChart3, Download, FileSearch, PackageSearch, Printer, Search, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -40,6 +41,8 @@ export function ReportWorkspace() {
   const [reportId, setReportId] = useState("current-stock");
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState(ALL_LOCATIONS);
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
 
   const categoryReports = REPORT_DEFINITIONS.filter((report) => report.category === category);
   const definition = REPORT_DEFINITIONS.find((report) => report.id === reportId) ?? REPORT_DEFINITIONS[0];
@@ -57,6 +60,13 @@ export function ReportWorkspace() {
       return Object.values(row).some((value) => String(value).toLowerCase().includes(term));
     });
   }, [location, result.locationKey, result.rows, search]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [definition.id, location, search]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const pagedRows = filteredRows.slice(page * pageSize, page * pageSize + pageSize);
 
   function selectCategory(nextCategory: ReportCategory) {
     const firstReport = REPORT_DEFINITIONS.find((report) => report.category === nextCategory);
@@ -163,7 +173,7 @@ export function ReportWorkspace() {
         <div className="min-w-0 space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="hidden text-xs font-medium text-muted-foreground print:block">HERRERA INVENTORY · REPORT</p>
+              <p className="hidden text-xs font-medium text-muted-foreground print:block">BIGSTOP INVENTORY · REPORT</p>
               <h2 className="text-xl font-semibold">{definition.name}</h2>
               <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{definition.description}</p>
             </div>
@@ -233,7 +243,7 @@ export function ReportWorkspace() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredRows.map((row, index) => (
+                      pagedRows.map((row, index) => (
                         <TableRow key={`${definition.id}-${index}`}>
                           {result.columns.map((column) => (
                             <TableCell
@@ -250,10 +260,16 @@ export function ReportWorkspace() {
                 </Table>
               </div>
 
-              <div className="flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
-                <span>{filteredRows.length} {filteredRows.length === 1 ? "record" : "records"}</span>
-                <span>Generated from current module data</span>
+              <div className="print:hidden">
+                <DataTablePagination
+                  page={page}
+                  pageCount={pageCount}
+                  pageSize={pageSize}
+                  totalRows={filteredRows.length}
+                  onPageChange={setPage}
+                />
               </div>
+              <p className="text-xs text-muted-foreground print:hidden">Generated from current module data</p>
             </CardContent>
           </Card>
         </div>

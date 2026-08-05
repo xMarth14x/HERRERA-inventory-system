@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type StatusColor } from "@/components/dashboard/status-badge";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/format";
+import { formatStatusLabel } from "@/lib/status-color";
 import type { Supplier, SupplierDocument } from "@/lib/supplier-data";
 
 const DOCUMENT_COLOR: Record<SupplierDocument["type"], StatusColor> = {
@@ -48,7 +49,7 @@ export function SupplierDetailDialog({
                 </div>
                 <StatusBadge
                   color={supplier.status === "Active" ? "green" : "gray"}
-                  label={supplier.status}
+                  label={formatStatusLabel(supplier.status)}
                 />
               </div>
             </DialogHeader>
@@ -106,7 +107,7 @@ export function SupplierDetailDialog({
                   />
                   <StatusBadge
                     color={BANK_STATUS_COLOR[supplier.bankDetails.status]}
-                    label={supplier.bankDetails.status}
+                    label={formatStatusLabel(supplier.bankDetails.status)}
                   />
                 </div>
               </Section>

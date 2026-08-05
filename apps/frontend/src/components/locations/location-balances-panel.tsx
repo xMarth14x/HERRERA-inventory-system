@@ -5,7 +5,7 @@ import { Wallet, Boxes, PackageCheck, Lock, Truck, AlertTriangle, ShieldAlert } 
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { KpiCard } from "@/components/dashboard/kpi-card";
+import { SummaryCard } from "@/components/shared/summary-card";
 import { formatCompactCurrency, formatNumber } from "@/lib/format";
 import { LOCATIONS, availableQuantity } from "@/lib/location-data";
 import { LocationBalanceChart } from "./location-balance-chart";
@@ -37,43 +37,43 @@ export function LocationBalancesPanel() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
+        <SummaryCard
           icon={Wallet}
           label="Inventory Value"
           value={formatCompactCurrency(balance.inventoryValue)}
           tone="blue"
         />
-        <KpiCard
+        <SummaryCard
           icon={Boxes}
           label="On Hand"
           value={formatNumber(balance.onHand)}
           tone="blue"
         />
-        <KpiCard
+        <SummaryCard
           icon={PackageCheck}
           label="Available (On Hand − Reserved)"
           value={formatNumber(availableQuantity(balance))}
           tone="green"
         />
-        <KpiCard
+        <SummaryCard
           icon={Lock}
           label="Reserved (within On Hand)"
           value={formatNumber(balance.reserved)}
           tone="amber"
         />
-        <KpiCard
+        <SummaryCard
           icon={Truck}
           label="In Transit"
           value={formatNumber(balance.inTransit)}
           tone="violet"
         />
-        <KpiCard
+        <SummaryCard
           icon={AlertTriangle}
           label="Damaged"
           value={formatNumber(balance.damaged)}
           tone="red"
         />
-        <KpiCard
+        <SummaryCard
           icon={ShieldAlert}
           label="Quarantined"
           value={formatNumber(balance.quarantined)}

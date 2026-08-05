@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge } from "@/components/dashboard/status-badge";
+import { BarcodeDisplay } from "@/components/barcode/barcode-display";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import type { Product } from "@/lib/product-data";
 import { ProductAvatar } from "./product-avatar";
@@ -95,6 +96,23 @@ export function ProductDetailDialog({
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="mb-2 text-sm font-semibold">Barcode labels</h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {product.variants.map((variant) => (
+                  <div
+                    key={variant.id}
+                    className="flex flex-col items-center gap-1 rounded-lg border bg-white p-3"
+                  >
+                    <p className="self-start text-xs font-medium text-muted-foreground">
+                      {variant.variantName}
+                    </p>
+                    <BarcodeDisplay value={variant.barcode} height={40} />
+                  </div>
+                ))}
               </div>
             </div>
           </>

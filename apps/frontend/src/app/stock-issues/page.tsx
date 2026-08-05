@@ -5,6 +5,8 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ListBarcodeScan } from "@/components/barcode/list-barcode-scan";
 import { StockIssuesTable, CATEGORY_ALL } from "@/components/stock-issues/stock-issues-table";
 import { StockIssueDetailDialog } from "@/components/stock-issues/stock-issue-detail-dialog";
 import { getStockIssues } from "@/lib/stock-issue-data";
@@ -34,6 +36,18 @@ export default function StockIssuesPage() {
           New Stock Issue
         </Button>
       </div>
+
+      <Card className="gap-3">
+        <CardContent>
+          <ListBarcodeScan
+            placeholder="Scan a barcode or SKU to find its issue record…"
+            onFound={(sku, productName) => {
+              setSearch(sku);
+              toast.success(`Found ${productName} — filtered to ${sku}.`);
+            }}
+          />
+        </CardContent>
+      </Card>
 
       <StockIssuesTable
         data={issues}

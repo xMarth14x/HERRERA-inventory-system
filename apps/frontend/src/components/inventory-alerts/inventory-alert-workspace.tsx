@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BellRing, CheckCircle2, CircleAlert, Eye, Search, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,28 +11,33 @@ import {
 import { InventoryAlertDetailDialog } from "@/components/inventory-alerts/inventory-alert-detail-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SummaryCard } from "@/components/shared/summary-card";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDate, formatNumber } from "@/lib/format";
 import {
-  INITIAL_INVENTORY_ALERTS,
   INVENTORY_ALERT_TYPES,
   type InventoryAlert,
   type InventoryAlertSeverity,
   type InventoryAlertStatus,
 } from "@/lib/inventory-alert-data";
+import { useInventoryAlerts, useSetInventoryAlerts } from "@/lib/use-inventory-alerts";
 import { cn } from "@/lib/utils";
 
 const ALL = "__all__";
 
 export function InventoryAlertWorkspace() {
-  const [alerts, setAlerts] = useState<InventoryAlert[]>(() => INITIAL_INVENTORY_ALERTS.map((alert) => ({ ...alert })));
+  const alerts = useInventoryAlerts();
+  const setAlerts = useSetInventoryAlerts();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState(ALL);
   const [severityFilter, setSeverityFilter] = useState(ALL);
   const [statusFilter, setStatusFilter] = useState(ALL);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
 
   const selectedAlert = alerts.find((alert) => alert.id === selectedId) ?? null;
   const filteredAlerts = useMemo(() => {
@@ -48,6 +53,13 @@ export function InventoryAlertWorkspace() {
         .includes(term);
     });
   }, [alerts, search, severityFilter, statusFilter, typeFilter]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [search, severityFilter, statusFilter, typeFilter]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredAlerts.length / pageSize));
+  const pagedAlerts = filteredAlerts.slice(page * pageSize, page * pageSize + pageSize);
 
   const openCount = alerts.filter((alert) => alert.status === "OPEN").length;
   const criticalCount = alerts.filter(
@@ -90,10 +102,10 @@ export function InventoryAlertWorkspace() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard icon={CircleAlert} label="Open alerts" value={openCount} detail="Needs attention" tone="red" />
-        <SummaryCard icon={ShieldAlert} label="Critical" value={criticalCount} detail="Unresolved critical alerts" tone="red" />
-        <SummaryCard icon={BellRing} label="Unread" value={unreadCount} detail="New alert activity" tone="blue" />
-        <SummaryCard icon={CheckCircle2} label="Resolved" value={resolvedCount} detail="Closed alerts" tone="green" />
+        <SummaryCard icon={CircleAlert} label="Open Alerts" value={formatNumber(openCount)} detail="Needs attention" tone="red" />
+        <SummaryCard icon={ShieldAlert} label="Critical" value={formatNumber(criticalCount)} detail="Unresolved critical alerts" tone="red" />
+        <SummaryCard icon={BellRing} label="Unread" value={formatNumber(unreadCount)} detail="New alert activity" tone="blue" />
+        <SummaryCard icon={CheckCircle2} label="Resolved" value={formatNumber(resolvedCount)} detail="Closed alerts" tone="green" />
       </div>
 
       <Card className="gap-3">
@@ -162,7 +174,7 @@ export function InventoryAlertWorkspace() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredAlerts.map((alert) => (
+                  pagedAlerts.map((alert) => (
                     <TableRow
                       key={alert.id}
                       className={cn("cursor-pointer", !alert.read && "bg-blue-50/50 hover:bg-blue-50")}
@@ -208,6 +220,14 @@ export function InventoryAlertWorkspace() {
               </TableBody>
             </Table>
           </div>
+
+          <DataTablePagination
+            page={page}
+            pageCount={pageCount}
+            pageSize={pageSize}
+            totalRows={filteredAlerts.length}
+            onPageChange={setPage}
+          />
         </CardContent>
       </Card>
 
@@ -245,39 +265,5 @@ function FilterSelect({
         <SelectContent>{children}</SelectContent>
       </Select>
     </div>
-  );
-}
-
-function SummaryCard({
-  icon: Icon,
-  label,
-  value,
-  detail,
-  tone,
-}: {
-  icon: typeof BellRing;
-  label: string;
-  value: number;
-  detail: string;
-  tone: "red" | "blue" | "green";
-}) {
-  const toneClasses = {
-    red: "bg-red-50 text-red-700",
-    blue: "bg-blue-50 text-blue-700",
-    green: "bg-emerald-50 text-emerald-700",
-  };
-  return (
-    <Card size="sm">
-      <CardContent className="flex items-center gap-3">
-        <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-lg", toneClasses[tone])}>
-          <Icon className="size-5" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="text-xl font-semibold tabular-nums">{formatNumber(value)}</p>
-          <p className="truncate text-xs text-muted-foreground">{detail}</p>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

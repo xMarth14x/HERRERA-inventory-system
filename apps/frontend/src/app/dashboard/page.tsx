@@ -1,16 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { Boxes, ClipboardList, Package, ShoppingCart, SlidersHorizontal } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Boxes,
+  ClipboardCheck,
+  ClipboardList,
+  FileClock,
+  Package,
+  ShoppingCart,
+  SlidersHorizontal,
+  Wallet,
+} from "lucide-react";
 
 import { DashboardFilters, ALL_VALUE, type DashboardFilterState } from "@/components/dashboard/dashboard-filters";
-import { KpiCard } from "@/components/dashboard/kpi-card";
+import { SummaryCard } from "@/components/shared/summary-card";
 import { LowStockItems } from "@/components/dashboard/low-stock-items";
-import { RecentActivities } from "@/components/dashboard/recent-activities";
+import { PendingApprovals } from "@/components/dashboard/pending-approvals";
+import { ExpiringProducts } from "@/components/dashboard/expiring-products";
+import { InventoryValueChart } from "@/components/dashboard/inventory-value-chart";
+import { TopMovers } from "@/components/dashboard/top-movers";
+import { RecentMovementsTable } from "@/components/dashboard/recent-movements-table";
 import { StockOverviewChart } from "@/components/dashboard/stock-overview-chart";
 import { StockStatusDonut } from "@/components/dashboard/stock-status-donut";
 import { getDashboardData } from "@/lib/dashboard-data";
-import { formatNumber } from "@/lib/format";
+import { formatCompactCurrency, formatNumber } from "@/lib/format";
 
 const today = new Date();
 const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -46,33 +60,57 @@ export default function DashboardPage() {
       </details>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
+        <SummaryCard
+          icon={Wallet}
+          label="Total Inventory Value"
+          value={formatCompactCurrency(data.kpis.totalInventoryValue)}
+          tone="green"
+        />
+        <SummaryCard
           icon={Package}
           label="Total Products"
           value={formatNumber(data.kpis.totalActiveProducts)}
+          detail={`${formatNumber(data.kpis.totalActiveVariants)} active variants`}
           tone="red"
-          secondary={[{ label: "active variants", value: formatNumber(data.kpis.totalActiveVariants), tone: "red" }]}
         />
-        <KpiCard
+        <SummaryCard
           icon={Boxes}
           label="Total Stock (Units)"
           value={formatNumber(data.kpis.totalStockUnits)}
+          detail={`+${formatNumber(data.kpis.stockReceivedToday)} received · -${formatNumber(data.kpis.stockIssuedToday)} issued today`}
           tone="blue"
-          secondary={[{ label: "received today", value: `+${formatNumber(data.kpis.stockReceivedToday)}`, tone: "blue" }]}
         />
-        <KpiCard
+        <SummaryCard
           icon={ClipboardList}
           label="Low Stock Items"
           value={formatNumber(data.kpis.lowStockCount)}
+          detail={`${formatNumber(data.kpis.outOfStockCount)} out of stock`}
           tone="amber"
-          secondary={[{ label: "out of stock", value: formatNumber(data.kpis.outOfStockCount), tone: "red" }]}
         />
-        <KpiCard
+        <SummaryCard
+          icon={FileClock}
+          label="Pending Purchase Requests"
+          value={formatNumber(data.kpis.pendingPurchaseRequests)}
+          tone="violet"
+        />
+        <SummaryCard
           icon={ShoppingCart}
-          label="Pending Purchases"
-          value={formatNumber(data.kpis.pendingPurchaseRequests + data.kpis.pendingPurchaseOrders)}
+          label="Pending Purchase Orders"
+          value={formatNumber(data.kpis.pendingPurchaseOrders)}
+          detail={`${formatNumber(data.kpis.posAwaitingDelivery)} awaiting delivery`}
           tone="red"
-          secondary={[{ label: "awaiting delivery", value: formatNumber(data.kpis.posAwaitingDelivery), tone: "red" }]}
+        />
+        <SummaryCard
+          icon={ArrowLeftRight}
+          label="Transfers in Transit"
+          value={formatNumber(data.kpis.transfersInTransit)}
+          tone="blue"
+        />
+        <SummaryCard
+          icon={ClipboardCheck}
+          label="Pending Approvals"
+          value={formatNumber(data.kpis.pendingApprovals)}
+          tone="amber"
         />
       </div>
 
@@ -81,10 +119,19 @@ export default function DashboardPage() {
         <StockStatusDonut data={data.stockStatus} />
       </div>
 
+      <div className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(340px,1fr)]">
+        <InventoryValueChart data={data.inventoryByLocation} />
+        <ExpiringProducts data={data.expiringProducts} />
+      </div>
+
+      <TopMovers fastMoving={data.fastMoving} slowMoving={data.slowMoving} />
+
       <div className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(340px,0.75fr)]">
         <LowStockItems data={data.lowStockItems} />
-        <RecentActivities data={data.recentMovements} />
+        <PendingApprovals data={data.pendingApprovals} />
       </div>
+
+      <RecentMovementsTable data={data.recentMovements} />
     </div>
   );
 }

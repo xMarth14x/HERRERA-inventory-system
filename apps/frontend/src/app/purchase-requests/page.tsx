@@ -36,20 +36,19 @@ export default function PurchaseRequestsPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-semibold tracking-tight">Purchase Request</h1>
+
+      <StatusSummary statuses={PURCHASE_REQUEST_STATUSES} counts={counts} />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Purchase Request</h1>
-          <p className="text-sm text-muted-foreground">
-            Status report of every requested product, from draft through approval.
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Status report of every requested product, from draft through approval.
+        </p>
         <Button onClick={() => toast.info("Creating purchase requests isn't wired to the backend yet.")}>
           <Plus className="size-4" />
           New Purchase Request
         </Button>
       </div>
-
-      <StatusSummary statuses={PURCHASE_REQUEST_STATUSES} counts={counts} />
 
       <PurchaseRequestsTable
         data={rows}

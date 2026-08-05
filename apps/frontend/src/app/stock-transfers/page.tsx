@@ -5,12 +5,14 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ListBarcodeScan } from "@/components/barcode/list-barcode-scan";
 import { StockTransfersTable, STATUS_ALL } from "@/components/stock-transfers/stock-transfers-table";
 import { StockTransferDetailDialog } from "@/components/stock-transfers/stock-transfer-detail-dialog";
-import { getStockTransfers } from "@/lib/stock-transfer-data";
+import { getStockTransfers, type StockTransfer } from "@/lib/stock-transfer-data";
 
 export default function StockTransfersPage() {
-  const transfers = getStockTransfers();
+  const [transfers, setTransfers] = useState<StockTransfer[]>(() => getStockTransfers());
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(STATUS_ALL);
@@ -19,6 +21,10 @@ export default function StockTransfersPage() {
   const selectedTransfer = selectedTransferNumber
     ? (transfers.find((t) => t.transferNumber === selectedTransferNumber) ?? null)
     : null;
+
+  function handleUpdate(updated: StockTransfer) {
+    setTransfers((current) => current.map((t) => (t.transferNumber === updated.transferNumber ? updated : t)));
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -35,6 +41,18 @@ export default function StockTransfersPage() {
         </Button>
       </div>
 
+      <Card className="gap-3">
+        <CardContent>
+          <ListBarcodeScan
+            placeholder="Scan a barcode or SKU to find its transfer…"
+            onFound={(sku, productName) => {
+              setSearch(sku);
+              toast.success(`Found ${productName} — filtered to ${sku}.`);
+            }}
+          />
+        </CardContent>
+      </Card>
+
       <StockTransfersTable
         data={transfers}
         search={search}
@@ -49,6 +67,7 @@ export default function StockTransfersPage() {
         onOpenChange={(open) => {
           if (!open) setSelectedTransferNumber(null);
         }}
+        onUpdate={handleUpdate}
       />
     </div>
   );

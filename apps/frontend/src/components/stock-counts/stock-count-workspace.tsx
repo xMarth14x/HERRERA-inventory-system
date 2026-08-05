@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, ClipboardList, Clock3, Plus, Search, ShieldCheck, Users } from "lucide-react";
 import { toast } from "sonner";
 
@@ -13,6 +13,8 @@ import { StockCountStatusBadge } from "@/components/stock-counts/stock-count-sta
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { SummaryCard } from "@/components/shared/summary-card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -49,6 +51,8 @@ export function StockCountWorkspace() {
   const [statusFilter, setStatusFilter] = useState(ALL);
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
 
   const selectedCount = counts.find((count) => count.id === selectedId) ?? null;
   const filteredCounts = useMemo(() => {
@@ -63,6 +67,13 @@ export function StockCountWorkspace() {
         .includes(term);
     });
   }, [counts, search, statusFilter, typeFilter]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [search, statusFilter, typeFilter]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredCounts.length / pageSize));
+  const pagedCounts = filteredCounts.slice(page * pageSize, page * pageSize + pageSize);
 
   const activeCount = counts.filter((count) => ["DRAFT", "IN_PROGRESS", "SECOND_COUNT"].includes(count.status)).length;
   const awaitingApproval = counts.filter((count) => count.status === "FOR_APPROVAL").length;
@@ -96,24 +107,23 @@ export function StockCountWorkspace() {
 
   return (
     <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-semibold tracking-tight">Physical Stock Count</h1>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard icon={ClipboardList} label="Total Counts" value={formatNumber(counts.length)} detail="All count types" tone="blue" />
+        <SummaryCard icon={Clock3} label="Active Counts" value={formatNumber(activeCount)} detail="Draft, first, or second count" tone="amber" />
+        <SummaryCard icon={ShieldCheck} label="Awaiting Approval" value={formatNumber(awaitingApproval)} detail="Variance review required" tone="violet" />
+        <SummaryCard icon={CheckCircle2} label="Completed" value={formatNumber(completedCount)} detail="Movements posted" tone="green" />
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Physical Stock Count</h1>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            Plan counts, capture blind or barcode-assisted quantities, review variances, and post approved movements.
-          </p>
-        </div>
+        <p className="max-w-2xl text-sm text-muted-foreground">
+          Plan counts, capture blind or barcode-assisted quantities, review variances, and post approved movements.
+        </p>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="size-4" />
           New stock count
         </Button>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard icon={ClipboardList} label="Total counts" value={counts.length} detail="All count types" />
-        <SummaryCard icon={Clock3} label="Active counts" value={activeCount} detail="Draft, first, or second count" />
-        <SummaryCard icon={ShieldCheck} label="Awaiting approval" value={awaitingApproval} detail="Variance review required" />
-        <SummaryCard icon={CheckCircle2} label="Completed" value={completedCount} detail="Movements posted" />
       </div>
 
       <Card className="gap-3">
@@ -191,7 +201,7 @@ export function StockCountWorkspace() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredCounts.map((count) => {
+                  pagedCounts.map((count) => {
                     const progress = getCountProgress(count);
                     const variance = getCountVariance(count);
                     return (
@@ -241,6 +251,14 @@ export function StockCountWorkspace() {
               </TableBody>
             </Table>
           </div>
+
+          <DataTablePagination
+            page={page}
+            pageCount={pageCount}
+            pageSize={pageSize}
+            totalRows={filteredCounts.length}
+            onPageChange={setPage}
+          />
         </CardContent>
       </Card>
 
@@ -253,31 +271,5 @@ export function StockCountWorkspace() {
         onUpdate={handleUpdate}
       />
     </div>
-  );
-}
-function SummaryCard({
-  icon: Icon,
-  label,
-  value,
-  detail,
-}: {
-  icon: typeof ClipboardList;
-  label: string;
-  value: number;
-  detail: string;
-}) {
-  return (
-    <Card size="sm">
-      <CardContent className="flex items-center gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Icon className="size-5" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="text-xl font-semibold tabular-nums">{formatNumber(value)}</p>
-          <p className="truncate text-xs text-muted-foreground">{detail}</p>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

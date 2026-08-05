@@ -1,14 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
-import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { type ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from "@tanstack/react-table";
 import { Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/dashboard/status-badge";
-import { statusColorForCode } from "@/lib/status-color";
+import { formatStatusLabel, statusColorForCode } from "@/lib/status-color";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/format";
 import { PURCHASE_REQUEST_STATUSES, type RequestedProductRow } from "@/lib/purchase-request-data";
 
@@ -85,7 +86,7 @@ export function PurchaseRequestsTable({
         accessorKey: "status",
         header: "Status",
         cell: ({ row }) => (
-          <StatusBadge color={statusColorForCode(row.original.status)} label={row.original.status} />
+          <StatusBadge color={statusColorForCode(row.original.status)} label={formatStatusLabel(row.original.status)} />
         ),
       },
     ],
@@ -96,6 +97,8 @@ export function PurchaseRequestsTable({
     data: filtered,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination: { pageSize: 10 } },
   });
 
   return (
@@ -170,6 +173,14 @@ export function PurchaseRequestsTable({
             )}
           </TableBody>
         </Table>
+
+        <DataTablePagination
+          page={table.getState().pagination.pageIndex}
+          pageCount={table.getPageCount()}
+          pageSize={table.getState().pagination.pageSize}
+          totalRows={filtered.length}
+          onPageChange={(page) => table.setPageIndex(page)}
+        />
       </CardContent>
     </Card>
   );

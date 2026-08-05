@@ -12,7 +12,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/dashboard/status-badge";
-import { statusColorForCode } from "@/lib/status-color";
+import { formatStatusLabel, statusColorForCode } from "@/lib/status-color";
 import { formatCurrency, formatDate } from "@/lib/format";
 import type { PurchaseRequest } from "@/lib/purchase-request-data";
 
@@ -40,7 +40,7 @@ export function PurchaseRequestDetailDialog({
                     {request.requestingDepartment} · Requested by {request.requestedBy}
                   </DialogDescription>
                 </div>
-                <StatusBadge color={statusColorForCode(request.status)} label={request.status} />
+                <StatusBadge color={statusColorForCode(request.status)} label={formatStatusLabel(request.status)} />
               </div>
             </DialogHeader>
 
